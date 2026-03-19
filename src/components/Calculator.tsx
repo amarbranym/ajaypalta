@@ -84,7 +84,10 @@ export function Calculator() {
                   value={[inputs.vmax_cc]}
                   min={100}
                   max={5000}
-                  onValueChange={(val) => updateInput("vmax_cc", val[0])}
+                  onValueChange={(val) => {
+                    const v = Array.isArray(val) ? val[0] : val;
+                    updateInput("vmax_cc", v);
+                  }}
                   className="py-1"
                 />
               </div>
@@ -108,7 +111,10 @@ export function Calculator() {
                   min={2}
                   max={100}
                   step={0.1}
-                  onValueChange={(val) => updateInput("cr", val[0])}
+                  onValueChange={(val) => {
+                    const v = Array.isArray(val) ? val[0] : val;
+                    updateInput("cr", v);
+                  }}
                   className="py-1"
                 />
               </div>
@@ -131,7 +137,10 @@ export function Calculator() {
                   min={500}
                   max={5000}
                   step={50}
-                  onValueChange={(val) => updateInput("tcap", val[0])}
+                  onValueChange={(val) => {
+                    const v = Array.isArray(val) ? val[0] : val;
+                    updateInput("tcap", v);
+                  }}
                   className="py-1"
                 />
               </div>

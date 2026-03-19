@@ -42,10 +42,10 @@ export function StandardCalculator() {
   }, [vmax, cr, tcap]);
 
   const pieData = [
-    { name: "Net Work", value: results.netWork },
-    { name: "Compression Work", value: results.w_compression },
-    { name: "Exhaust Heat", value: results.q_in - results.netWork },
-    { name: "Losses", value: results.q_in * 0.05 }, // Placeholder for irreversibilities
+    { name: "Net Work", value: results.netWork, color: "#3b82f6" },
+    { name: "Compression Work", value: results.w_compression, color: "#60a5fa" },
+    { name: "Exhaust Heat", value: results.q_in - results.netWork, color: "#ef4444" },
+    { name: "Losses", value: results.q_in * 0.05, color: "#94a3b8" },
   ];
 
   const handleReset = () => {
