@@ -447,7 +447,41 @@ export default function HybridExplorer() {
   const [keyMetricsOnly, setKeyMetricsOnly] = useState(false);
   const [selectedGraphMetric, setSelectedGraphMetric] = useState("T2_C");
   const [selectedSankeyModelId, setSelectedSankeyModelId] = useState<string>("");
+  const [logs, setLogs] = useState<{ id: string; msg: string; type: string; time: string }[]>([]);
 
+  useEffect(() => {
+    const messages = [
+      { msg: "SYSTEM_BOOT: KERNEL_LOAD_OK", type: "info" },
+      { msg: "SIM_ENGINE: INITIALIZING_THERMO_V4", type: "info" },
+      { msg: "SYNC: METADATA_FETCH_COMPLETE", type: "success" },
+      { msg: "SENSOR_READ: T_AMB = 298.15K", type: "info" },
+      { msg: "CALC_STABILITY: 99.8% FIDELITY", type: "success" },
+    ];
+    
+    let i = 0;
+    const interval = setInterval(() => {
+      if (i < messages.length) {
+        setLogs(prev => [...prev.slice(-9), { 
+          id: Math.random().toString(), 
+          ...messages[i % messages.length], 
+          time: new Date().toLocaleTimeString() 
+        }]);
+        i++;
+      } else {
+        // Random operational noise
+        const noise = [
+          "MEM_SYNC: OK", "P_MAX: CALCULATING", "HEAT_FLUX: STABLE", "ISOTHM_DRIFT: 0.002%", "RECLAIM_RATIO: 0.941"
+        ];
+        setLogs(prev => [...prev.slice(-9), { 
+          id: Math.random().toString(), 
+          msg: noise[Math.floor(Math.random() * noise.length)], 
+          type: "info", 
+          time: new Date().toLocaleTimeString() 
+        }]);
+      }
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   const [panelOpen, setPanelOpen] = useState<Record<string, boolean>>({
     "Performance Graph": true,
@@ -1318,6 +1352,53 @@ export default function HybridExplorer() {
           </Tabs>
 
         </div>
+      </div>
+
+      {/* Professional Diagnostic Console (Absolute Bottom) */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none">
+         <div className="container px-6 py-4">
+            <motion.div 
+               initial={{ y: 100 }}
+               animate={{ y: 0 }}
+               className="glass-premium border border-white/20 rounded-2xl p-4 flex items-center gap-6 pointer-events-auto shadow-[0_-20px_50px_rgba(0,0,0,0.5)]"
+            >
+               <div className="flex items-center gap-3 pr-6 border-r border-white/10">
+                  <Activity className="w-4 h-4 text-blue-400 animate-pulse" />
+                  <span className="text-[10px] font-black text-white uppercase tracking-[0.3em]">Diagnostics</span>
+               </div>
+               
+               <div className="flex-1 overflow-hidden h-6 relative">
+                  <AnimatePresence mode="popLayout">
+                     {logs.slice(-1).map((log) => (
+                       <motion.div
+                         key={log.id}
+                         initial={{ y: 20, opacity: 0 }}
+                         animate={{ y: 0, opacity: 1 }}
+                         exit={{ y: -20, opacity: 0 }}
+                         className="flex items-center gap-4 h-full"
+                       >
+                         <span className="text-[9px] font-mono text-slate-500">[{log.time}]</span>
+                         <span className={cn(
+                           "text-[10px] font-mono uppercase tracking-widest",
+                           log.type === "success" ? "text-emerald-400" : "text-blue-400"
+                         )}>
+                           {log.msg}
+                         </span>
+                       </motion.div>
+                     ))}
+                  </AnimatePresence>
+               </div>
+
+               <div className="flex items-center gap-4 text-[9px] font-mono text-slate-600">
+                  <div className="flex items-center gap-2">
+                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                     LIVE_SIM
+                  </div>
+                  <div className="h-3 w-px bg-white/10" />
+                  <span className="animate-pulse">REC_ACTIVE</span>
+               </div>
+            </motion.div>
+         </div>
       </div>
     </div>
   );

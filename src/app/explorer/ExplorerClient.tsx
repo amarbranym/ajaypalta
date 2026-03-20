@@ -33,12 +33,12 @@ export default function ExplorerClient() {
       <SectionWrapper className="pt-0 pb-32">
         <div className="container px-4">
           <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-16">
-            <div className="bg-white/5 border border-white/10 p-1 rounded-xl flex gap-1">
+            <div className="bg-[#030712]/50 border border-white/5 p-1 rounded-xl flex gap-1 backdrop-blur-md">
               <button 
                 onClick={() => setView("dive")}
                 className={cn(
-                  "px-6 py-2 rounded-lg text-sm font-bold transition-all",
-                  view === "dive" ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20" : "text-slate-400 hover:text-white"
+                  "px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                  view === "dive" ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20" : "text-slate-500 hover:text-white"
                 )}
               >
                 Deep Dive
@@ -46,11 +46,11 @@ export default function ExplorerClient() {
               <button 
                 onClick={() => setView("compare")}
                 className={cn(
-                  "px-6 py-2 rounded-lg text-sm font-bold transition-all",
-                  view === "compare" ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20" : "text-slate-400 hover:text-white"
+                  "px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                  view === "compare" ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20" : "text-slate-500 hover:text-white"
                 )}
               >
-                Model Comparison
+                Comparison
               </button>
             </div>
             
@@ -59,7 +59,7 @@ export default function ExplorerClient() {
             </GlowButton>
           </div>
           
-          <div className="glass rounded-3xl p-4 md:p-8 border border-white/10 relative overflow-hidden bg-white/[0.01]">
+          <div className="glass rounded-3xl p-4 md:p-8 border border-white/5 relative overflow-hidden bg-[#030712]/50 backdrop-blur-xl">
              {/* Background glow decoration */}
              <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-64 h-64 bg-blue-500/10 blur-[100px] pointer-events-none" />
              

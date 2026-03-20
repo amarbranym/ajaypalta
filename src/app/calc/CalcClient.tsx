@@ -13,7 +13,12 @@ export default function CalcClient() {
     <main className="min-h-screen bg-background text-foreground flex flex-col font-sans selection:bg-blue-500/30">
       <Header />
       
-      <div className="pt-20" />
+      <SubHero 
+        badge="Thermodynamic Solver"
+        title="HOPE Cycle"
+        gradientTitle="Calculator"
+        description="Verify the theoretical efficiency of the HOPE cycle. Input your parameters to see the energy reclamation potential."
+      />
 
       <SectionWrapper className="pt-0 pb-32">
         <div className="container px-4">

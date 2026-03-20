@@ -5,18 +5,16 @@ import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="relative bg-black border-t border-white/5 pt-24 pb-12 overflow-hidden">
-      {/* Engineering Grid Background */}
-      <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
-        style={{ 
-          backgroundImage: `radial-gradient(circle at 2px 2px, rgba(255,255,255,0.15) 1px, transparent 0)`,
-          backgroundSize: '32px 32px' 
-        }} 
-      />
+    <footer className="relative bg-[#020617] border-t border-white/10 pt-32 pb-20 overflow-hidden blueprint-grid">
+      {/* Dynamic Background */}
+      <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,rgba(59,130,246,0.05),transparent_70%)] pointer-events-none" />
       
       {/* Decoration */}
-      <div className="absolute top-0 left-1/4 w-px h-64 bg-linear-to-b from-blue-500/20 to-transparent" />
-      <div className="absolute bottom-0 right-1/4 w-px h-64 bg-linear-to-t from-violet-500/20 to-transparent" />
+      <div className="absolute top-0 left-1/4 w-px h-64 bg-gradient-to-b from-blue-500/20 to-transparent" />
+      <div className="absolute bottom-0 right-1/4 w-px h-64 bg-gradient-to-t from-violet-500/20 to-transparent" />
+      
+      {/* Blueprint Markers */}
+      <div className="absolute top-10 left-10 blueprint-marker">FOOTER_DATA_v1.2</div>
 
       <div className="container relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-16 lg:gap-8 mb-20">
@@ -28,12 +26,13 @@ export default function Footer() {
                 <Rocket className="text-blue-500 w-6 h-6 transform group-hover:-rotate-12 transition-transform" />
               </div>
               <div className="flex flex-col">
-                <span className="text-2xl font-black tracking-tighter text-white">
-                  AJAY <span className="text-slate-500">PALTA</span>
+                <span className="text-2xl font-black tracking-tighter text-white font-playfair italic">
+                  AJAY <span className="text-slate-500 not-italic uppercase">PALTA</span>
                 </span>
-                <span className="text-[10px] font-bold text-blue-400 uppercase tracking-[0.3em]">Thermodynamics</span>
+                <span className="text-[10px] font-bold text-blue-400 uppercase tracking-[0.4em] mt-1">Thermodynamics</span>
               </div>
             </Link>
+
             
             <p className="text-slate-400 text-sm leading-relaxed max-w-sm">
               Pushing the boundaries of energy recovery and thermodynamic efficiency. The HOPE cycle represents a paradigm shift in scalable power systems.

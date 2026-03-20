@@ -26,19 +26,19 @@ export default function ContactClient() {
             {/* Background Glow */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-blue-600/5 rounded-full blur-[100px] pointer-events-none" />
 
-            <GlassCard className="p-8 border-white/5 bg-white/[0.01] hover:bg-white/[0.03] transition-all group">
+            <GlassCard className="p-8 border-white/5 bg-[#030712]/50 backdrop-blur-xl hover:bg-white/[0.03] transition-all group">
               <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-400 mb-6 group-hover:scale-110 transition-transform">
                 <Mail className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-bold text-white mb-2">Email Inquiry</h3>
-              <p className="text-slate-500 mb-6 text-sm">Direct research or business inquiries.</p>
+              <h3 className="text-xl font-bold text-white mb-3">Email Inquiry</h3>
+              <p className="text-slate-500 mb-6 text-sm font-light italic opacity-80">Direct research or business inquiries.</p>
               <a href="mailto:contact@ajaypalta.com" className="text-blue-400 font-bold hover:text-blue-300 transition-colors flex items-center gap-2">
                 contact@ajaypalta.com
                 <ArrowUpRight className="w-4 h-4" />
               </a>
             </GlassCard>
 
-            <GlassCard className="p-8 border-white/5 bg-white/[0.01] hover:bg-white/[0.03] transition-all group">
+            <GlassCard className="p-8 border-white/5 bg-[#030712]/50 backdrop-blur-xl hover:bg-white/[0.03] transition-all group">
               <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-400 mb-6 group-hover:scale-110 transition-transform">
                 <Linkedin className="w-6 h-6" />
               </div>
