@@ -3,6 +3,7 @@ import React from "react";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import Philosophy from "@/components/Philosophy";
+import EvolutionTimeline from "@/components/EvolutionTimeline";
 import ProblemSolution from "@/components/ProblemSolution";
 import HowItWorks from "@/components/HowItWorks";
 import Benefits from "@/components/Benefits";
@@ -16,6 +17,7 @@ export default function HomeClient() {
       <Header />
       <Hero />
       <Philosophy />
+      <EvolutionTimeline />
       <ProblemSolution />
       <HowItWorks />
       <Benefits />

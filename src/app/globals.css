@@ -14,11 +14,22 @@
   --color-muted-foreground: var(--muted-foreground);
   --radius-lg: var(--radius);
   
+  --font-serif: var(--font-playfair);
+  --font-playfair: var(--font-playfair);
+  
   /* Custom colors */
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-accent-blue: #0ea5e9;
   --color-accent-violet: #8b5cf6;
+
+  /* Custom animations */
+  --animate-spin-slow: spin 8s linear infinite;
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
 }
 
 :root, .dark, [data-theme="dark"] {
