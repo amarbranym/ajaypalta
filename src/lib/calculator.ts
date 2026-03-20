@@ -82,49 +82,70 @@ export function calculateStandardCycle(inputs: Pick<CalcInputs, "vmax_cc" | "cr"
 }
 
 /**
- * Legacy/Advanced Cycle Calculation
- * Supports full range of inputs and dynamic physics.
+ * Advanced/Hybrid Cycle Calculation
+ * Supports isothermal compression and dynamic physics.
  */
 export function calculateHopeCycle(inputs: CalcInputs): CalcOutputs {
-  if (inputs.mode === "standard") {
-    return calculateStandardCycle(inputs);
+  const { vmax_cc, cr, tcap, gamma_eff = 1.33, mode = "advanced" } = inputs;
+  const g = gamma_eff;
+  const T1 = T1_DEFAULT;
+  const P1 = P1_DEFAULT;
+  const V1 = vmax_cc / 1e6;
+  const R = R_SPECIFIC_AIR;
+  const Cv = CV_AIR;
+
+  const mass = (P1 * 1e5 * V1) / (R * T1);
+
+  let t2: number;
+  let p2: number;
+  let w_compression: number;
+
+  if (mode === "standard") {
+    // Isothermal compression @ T_ISO
+    t2 = T_ISO_DEFAULT;
+    p2 = P1 * cr; 
+    w_compression = mass * R * t2 * Math.log(cr);
+  } else {
+    // Advanced: Hybrid compression
+    // We model this as an 'effective' polytropic process with lower gamma
+    // if water is injected. For simplicity, we'll keep adiabatic but 
+    // allow the user to see the 'HOPE' effect by providing a lower gamma.
+    // However, if we want to be truer to the "hybrid" name, 
+    // let's assume it's partially isothermal.
+    
+    // Polytropic n approx midway between 1 and gamma
+    const n = 1.0 + (g - 1.0) * 0.4; // 40% adiabatic, 60% isothermal approx
+    
+    t2 = T1 * Math.pow(cr, n - 1);
+    p2 = P1 * Math.pow(cr, n);
+    w_compression = (mass * R * (t2 - T1)) / (n - 1);
   }
 
-  const { vmax_cc, cr, tcap, gamma_eff = 1.33 } = inputs;
-  const g = gamma_eff;
-  const V1 = vmax_cc / 1e6;
-  const mass = (P1_DEFAULT * 1e5 * V1) / (R_SPECIFIC_AIR * T1_DEFAULT);
-
-  // 1. Compression (Adiabatic)
-  const t2 = T1_DEFAULT * Math.pow(cr, g - 1);
-  const p2 = P1_DEFAULT * Math.pow(cr, g);
-
-  // 2. Heat Addition
+  // 2. Heat Addition (Constant Volume)
   const t3 = Math.max(tcap, 500);
   const p3 = p2 * (t3 / t2);
 
-  // 3. Expansion
+  // 3. Expansion (Adiabatic)
   const t4 = t3 / Math.pow(cr, g - 1);
   const p4 = p3 / Math.pow(cr, g);
 
   // 4. Energy
-  const q_in = mass * CV_AIR * (t3 - t2);
-  const w_compression = mass * CV_AIR * (t2 - T1_DEFAULT);
-  const w_expansion = mass * CV_AIR * (t3 - t4);
+  const q_in = mass * Cv * (t3 - t2);
+  const w_expansion = mass * Cv * (t3 - t4);
   const w_net = w_expansion - w_compression;
 
   return {
     efficiency: q_in > 0 ? (w_net / q_in) * 100 : 0,
     netWork: w_net,
     imep: (w_net / (V1 - V1/cr)) / 1e5,
-    waterRequired: Math.max(0, (t3 - 1500) * 0.0005),
-    t_avg: (T1_DEFAULT + t2 + t3 + t4) / 4,
+    waterRequired: Math.max(0, (t3 - 1500) * 0.0005 + (t2 - 400) * 0.0002), // Refined proxy
+    t_avg: (T1 + t2 + t3 + t4) / 4,
     q_in,
     p_peak: p3,
     w_expansion,
     w_compression,
-    t1: T1_DEFAULT, t2, t3, t4,
-    p1: P1_DEFAULT, p2, p3, p4,
+    t1: T1, t2, t3, t4,
+    p1: P1, p2, p3, p4,
     mass
   };
 }

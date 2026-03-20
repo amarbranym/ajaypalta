@@ -17,26 +17,34 @@ export function GlowButton({
   ...props
 }: GlowButtonProps) {
   const variants = {
-    primary: "bg-blue-600 text-white hover:bg-blue-500 shadow-[0_0_20px_rgba(37,99,235,0.3)]",
-    secondary: "bg-slate-800 text-white hover:bg-slate-700",
-    outline: "bg-transparent border border-white/20 text-white hover:bg-white/5",
+    primary: "bg-blue-600 text-white hover:bg-blue-500 shadow-[0_0_20px_rgba(37,99,235,0.3)] border-blue-400/20",
+    secondary: "bg-slate-800 text-white hover:bg-slate-700 border-white/5",
+    outline: "bg-white/[0.03] border border-white/10 text-white hover:bg-white/[0.08] hover:border-white/20",
   };
 
   return (
     <motion.button
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
+      whileHover={props.disabled ? {} : { scale: 1.02, y: -1 }}
+      whileTap={props.disabled ? {} : { scale: 0.98 }}
       className={cn(
-        "relative px-8 py-3 rounded-full font-semibold transition-all duration-300 group overflow-hidden",
+        "relative px-8 py-3 rounded-xl font-bold transition-all duration-300 group overflow-hidden border",
         variants[variant],
+        props.disabled && "opacity-50 cursor-not-allowed grayscale",
         className
       )}
       {...props}
     >
+      {/* Shine effect */}
       <div
-        className="absolute inset-0 bg-linear-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] pointer-events-none"
+        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none"
       />
-      <span className="relative z-10 flex items-center justify-center gap-2">
+      
+      {/* Subtle Glow (for primary) */}
+      {variant === "primary" && (
+        <div className="absolute inset-0 bg-blue-400/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10" />
+      )}
+
+      <span className="relative z-10 flex items-center justify-center gap-2 whitespace-nowrap">
         {children}
       </span>
     </motion.button>

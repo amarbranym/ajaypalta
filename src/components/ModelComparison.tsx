@@ -16,7 +16,14 @@ import {
 import { GlassCard } from "./ui/GlassCard";
 import { GlowButton } from "./ui/GlowButton";
 import { Input } from "./ui/input";
-import { ChevronDown, ChevronRight, FileJson, FileType, Image as ImageIcon, Plus, RotateCcw } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { ChevronDown, ChevronRight, FileJson, FileType, Image as ImageIcon, Plus, RotateCcw, Activity, Zap, ArrowRight } from "lucide-react";
+
+function formatGraphValue(metricKey: string, raw: number) {
+  if (!Number.isFinite(raw)) return "—";
+  if (metricKey === "eta_brake_pct") return `${(raw * 100).toFixed(1)}%`;
+  return raw.toFixed(2);
+}
 
 type UiRole = "input" | "readonly" | "derived" | "hidden" | "hidden_value" | string;
 type DType = "number" | "percent" | "text" | string;
@@ -222,11 +229,11 @@ export default function ModelComparison() {
         { name: "Exhaust" }, { name: "Cooling Net" }, { name: "Friction" }
       ],
       links: [
-        { source: 0, target: 1, value: qIn },
-        { source: 1, target: 2, value: safeMetric(v, "W_brake_J") },
-        { source: 1, target: 3, value: safeMetric(v, "Q_exh_real_bal_J") },
-        { source: 1, target: 4, value: safeMetric(v, "Q_cool_net_J") },
-        { source: 1, target: 5, value: safeMetric(v, "Q_fric_J") }
+        { source: 0, target: 1, value: Math.max(0, qIn) },
+        { source: 1, target: 2, value: Math.max(0, safeMetric(v, "W_brake_J")) },
+        { source: 1, target: 3, value: Math.max(0, safeMetric(v, "Q_exh_real_bal_J")) },
+        { source: 1, target: 4, value: Math.max(0, safeMetric(v, "Q_cool_net_J")) },
+        { source: 1, target: 5, value: Math.max(0, safeMetric(v, "Q_fric_J")) }
       ]
     };
   }, [models, selectedSankeyId]);
@@ -236,87 +243,105 @@ export default function ModelComparison() {
   return (
     <div className="space-y-12">
       <div className="flex flex-wrap items-center justify-between gap-6">
-        <div className="flex gap-2">
-          {models.map(m => (
+        <div className="flex gap-3">
+          {models.map((m, idx) => (
             <GlowButton 
               key={m.id}
               variant={selectedSankeyId === m.id ? "primary" : "outline"}
               onClick={() => setSelectedSankeyId(m.id)}
-              className="text-xs py-1 px-4"
+              className="text-[10px] uppercase font-black tracking-widest py-2 px-5 h-auto"
             >
-              {m.name}
+              <div className="flex items-center gap-2">
+                <div className={cn(
+                  "w-1.5 h-1.5 rounded-full",
+                  selectedSankeyId === m.id ? "bg-white animate-pulse" : "bg-blue-500/50"
+                )} />
+                {m.name}
+              </div>
             </GlowButton>
           ))}
           {models.length < MAX_MODELS && (
             <button 
-              onClick={() => setModels([...models, { ...models[0], id: crypto.randomUUID(), name: `Model ${models.length + 1}` }])}
-              className="p-2 rounded-full border border-dashed border-white/20 hover:bg-white/5 transition-colors"
+              onClick={() => {
+                const base = models[models.length-1];
+                setModels([...models, { ...base, id: crypto.randomUUID(), name: `Model ${String.fromCharCode(65 + models.length)}` }]);
+              }}
+              className="w-9 h-9 flex items-center justify-center rounded-xl border border-dashed border-white/10 hover:border-blue-500/50 hover:bg-blue-500/5 transition-all group"
             >
-              <Plus className="w-4 h-4 text-slate-400" />
+              <Plus className="w-4 h-4 text-slate-500 group-hover:text-blue-400 transition-colors" />
             </button>
           )}
         </div>
         <div className="flex gap-3">
-          <GlowButton variant="outline" className="text-xs h-9 px-4">
-            <FileJson className="w-3.5 h-3.5 mr-2" /> Export JSON
+          <GlowButton onClick={() => {/* TODO: Implement JSON export */}} variant="outline" className="text-[10px] uppercase font-black tracking-widest h-10 px-6 gap-2 bg-white/[0.02]">
+            <FileJson className="w-3.5 h-3.5 text-blue-400" /> Export JSON
           </GlowButton>
-          <GlowButton variant="outline" className="text-xs h-9 px-4">
-            <FileType className="w-3.5 h-3.5 mr-2" /> Export CSV
+          <GlowButton onClick={() => {/* TODO: Implement CSV export */}} variant="outline" className="text-[10px] uppercase font-black tracking-widest h-10 px-6 gap-2 bg-white/[0.02]">
+            <FileType className="w-3.5 h-3.5 text-emerald-400" /> Export CSV
           </GlowButton>
         </div>
       </div>
 
-      <GlassCard className="overflow-hidden border-white/5 bg-transparent!">
+      <GlassCard className="overflow-hidden border-white/5 bg-slate-900/40 backdrop-blur-xl shadow-2xl">
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="bg-white/[0.02]">
-                <th className="p-4 text-left text-xs font-black text-slate-500 uppercase tracking-widest border-b border-white/5 sticky left-0 bg-[#0a0a0c] z-20 min-w-[240px]">
+              <tr className="bg-white/[0.03]">
+                <th className="p-5 text-left text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] border-b border-white/5 sticky left-0 bg-[#0a0a0c] z-20 min-w-[280px]">
                   Thermodynamic Metric
                 </th>
                 {models.map(m => (
-                  <th key={m.id} className="p-4 text-center text-sm font-bold text-white border-b border-white/5 min-w-[160px]">
+                  <th key={m.id} className="p-5 text-right text-[10px] font-black text-blue-400 uppercase tracking-widest border-b border-white/5 border-l border-white/5 min-w-[150px]">
                     {m.name}
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {panels.map(panel => (
+              {panels.map((panel, pIdx) => (
                 <React.Fragment key={panel.panel_key}>
                   <tr 
-                    className="bg-blue-500/[0.03] cursor-pointer hover:bg-blue-500/[0.05] transition-colors"
+                    className="bg-blue-600/[0.05] cursor-pointer hover:bg-blue-600/[0.08] transition-colors group"
                     onClick={() => setExpandedPanels(p => ({ ...p, [panel.panel_key]: !p[panel.panel_key] }))}
                   >
                     <td 
                       colSpan={models.length + 1} 
-                      className="p-3 px-6 text-xs font-black text-blue-400 uppercase tracking-widest border-b border-white/5"
+                      className="p-4 px-8 text-[10px] font-black text-blue-400 uppercase tracking-[0.3em] border-b border-white/5"
                     >
-                      <div className="flex items-center gap-2">
-                        {expandedPanels[panel.panel_key] ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                        {panel.panel_key}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-5 h-5 rounded-md bg-blue-600/20 flex items-center justify-center">
+                            {expandedPanels[panel.panel_key] ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                          </div>
+                          {panel.panel_key}
+                        </div>
+                        <span className="text-[9px] font-mono text-slate-600 group-hover:text-blue-400/50 transition-colors uppercase">
+                          {panel.items.length} Metrics
+                        </span>
                       </div>
                     </td>
                   </tr>
                   {expandedPanels[panel.panel_key] && panel.items.map((it, idx) => (
-                    <tr key={it.metric_key} className={idx % 2 === 0 ? "bg-transparent" : "bg-white/[0.01]"}>
-                      <td className="p-4 text-sm font-medium text-slate-300 border-b border-white/5 sticky left-0 bg-[#0a0a0c] z-10 border-r border-white/5">
+                    <tr key={it.metric_key} className={cn("hover:bg-white/[0.02] transition-colors border-b border-white/5", idx % 2 === 0 ? "bg-transparent" : "bg-white/[0.005]")}>
+                      <td className="p-4 px-8 text-[11px] font-bold text-slate-400 uppercase tracking-wider sticky left-0 bg-[#0a0a0c] z-10 border-r border-white/5">
                         {it.label}
                       </td>
                       {models.map(m => (
-                        <td key={m.id} className="p-4 text-center border-b border-white/5">
+                        <td key={m.id} className="p-4 text-right border-l border-white/5">
                           {isEditable(it) ? (
-                            <Input 
-                              type="number"
-                              value={m.inputs[it.metric_key] ?? ""}
-                              onChange={(e) => {
-                                const val = parseFloat(e.target.value) || 0;
-                                setModels(prev => prev.map(mm => mm.id === m.id ? { ...mm, inputs: { ...mm.inputs, [it.metric_key]: val } } : mm));
-                              }}
-                              className="w-24 mx-auto h-8 bg-white/5 border-white/10 text-center text-sm font-mono"
-                            />
+                            <div className="flex justify-end">
+                              <Input 
+                                type="number"
+                                value={m.inputs[it.metric_key] ?? ""}
+                                onChange={(e) => {
+                                  const val = parseFloat(e.target.value) || 0;
+                                  setModels(prev => prev.map(mm => mm.id === m.id ? { ...mm, inputs: { ...mm.inputs, [it.metric_key]: val } } : mm));
+                                }}
+                                className="w-24 h-8 bg-white/5 border-white/10 text-right text-xs font-mono font-bold text-white focus-visible:ring-blue-500/20 transition-all"
+                              />
+                            </div>
                           ) : (
-                            <span className="text-sm font-mono font-bold text-white">
+                            <span className="text-xs font-black font-mono tracking-tighter text-white">
                               {getDisplayValue(m, it)}
                             </span>
                           )}
@@ -331,59 +356,179 @@ export default function ModelComparison() {
         </div>
       </GlassCard>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <GlassCard className="p-8 border-white/5 bg-white/[0.01]">
-          <div className="flex items-center justify-between mb-8">
-            <h3 className="text-xl font-bold text-white">Efficiency Trends</h3>
+      <div className="grid grid-cols-1 gap-12">
+        <GlassCard className="p-0 border-white/5 bg-slate-900/40 backdrop-blur-sm overflow-hidden border-none shadow-2xl">
+          <div className="p-6 px-8 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
+            <div className="flex items-center gap-3">
+              <Activity className="w-4 h-4 text-blue-400" />
+              <h3 className="text-xs font-black text-white uppercase tracking-widest">Efficiency Trends</h3>
+            </div>
             <select 
               value={selectedGraphMetric}
               onChange={(e) => setSelectedGraphMetric(e.target.value)}
-              className="bg-white/5 border border-white/10 text-white text-xs rounded-lg px-3 py-1.5 outline-hidden"
+              className="bg-white/5 border border-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-lg px-4 py-2 outline-none hover:bg-white/10 transition-all cursor-pointer"
             >
-              {GRAPH_METRIC_OPTIONS.map(opt => <option key={opt.key} value={opt.key}>{opt.label}</option>)}
+              {GRAPH_METRIC_OPTIONS.map(opt => <option key={opt.key} value={opt.key} className="bg-slate-900">{opt.label}</option>)}
             </select>
           </div>
-          <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={models.map(m => ({ 
-                name: m.name, 
-                val: safeMetric(m.values, selectedGraphMetric) 
-              }))}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="name" stroke="#64748b" fontSize={12} />
-                <YAxis stroke="#64748b" fontSize={12} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: "#0f172a", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px" }}
-                  itemStyle={{ color: "#3b82f6" }}
-                />
-                <Line type="monotone" dataKey="val" stroke="#3b82f6" strokeWidth={3} dot={{ fill: "#3b82f6", r: 6 }} activeDot={{ r: 8 }} />
-              </LineChart>
-            </ResponsiveContainer>
+          <div className="p-8">
+            <div className="h-[400px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={models.map(m => ({ 
+                  name: m.name, 
+                  val: safeMetric(m.values, selectedGraphMetric) 
+                }))} margin={{ top: 20, right: 30, left: 10, bottom: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                  <XAxis 
+                    dataKey="name" 
+                    stroke="rgba(255,255,255,0.2)" 
+                    fontSize={10} 
+                    tick={{ fill: "rgba(255,255,255,0.4)" }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis 
+                    stroke="rgba(255,255,255,0.2)" 
+                    fontSize={10} 
+                    tick={{ fill: "rgba(255,255,255,0.4)" }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip 
+                    content={({ active, payload, label }) => {
+                      if (active && payload && payload.length) {
+                        return (
+                          <div className="bg-[#020617] border border-white/10 p-3 rounded-xl shadow-2xl backdrop-blur-md">
+                            <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{label}</div>
+                            <div className="text-lg font-black text-blue-400 font-mono tracking-tighter">
+                              {formatGraphValue(selectedGraphMetric, payload[0].value as number)}
+                            </div>
+                            <div className="text-[9px] font-black text-slate-600 uppercase tracking-widest mt-1">
+                              {GRAPH_METRIC_OPTIONS.find(o => o.key === selectedGraphMetric)?.label}
+                            </div>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="val" 
+                    stroke="#3b82f6" 
+                    strokeWidth={4} 
+                    dot={{ fill: "#3b82f6", r: 6, strokeWidth: 2, stroke: "#020617" }} 
+                    activeDot={{ r: 8, fill: "#60a5fa", stroke: "white" }} 
+                    animationDuration={1500}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </GlassCard>
 
-        <GlassCard className="p-8 border-white/5 bg-white/[0.01]">
-          <h3 className="text-xl font-bold text-white mb-8">Energy Partition Flow</h3>
-          {sankeyData ? (
-            <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <Sankey
-                  data={sankeyData}
-                  nodePadding={50}
-                  nodeWidth={15}
-                  linkCurvature={0.4}
-                  node={{ stroke: "rgba(255,255,255,0.2)", strokeWidth: 1 }}
-                  link={{ stroke: "rgba(59,130,246,0.15)" }}
-                >
-                  <Tooltip 
-                     contentStyle={{ backgroundColor: "#0f172a", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px" }}
-                  />
-                </Sankey>
-              </ResponsiveContainer>
+        <GlassCard className="p-0 border-white/5 bg-slate-900/40 backdrop-blur-sm overflow-hidden border-none shadow-2xl">
+          <div className="p-6 px-8 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Zap className="w-4 h-4 text-violet-400" />
+              <h3 className="text-xs font-black text-white uppercase tracking-widest">Energy Partition Flow</h3>
             </div>
-          ) : (
-            <div className="h-[300px] flex items-center justify-center text-slate-500">Awaiting detailed simulation data...</div>
-          )}
+            <div className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
+              Active: {models.find(m => m.id === selectedSankeyId)?.name}
+            </div>
+          </div>
+          <div className="p-8">
+            {sankeyData ? (
+              <div className="h-[550px] w-full min-h-[550px] relative">
+                <ResponsiveContainer width="100%" height="100%">
+                  <Sankey
+                    data={sankeyData}
+                    nodePadding={60}
+                    nodeWidth={32}
+                    linkCurvature={0.4}
+                    margin={{ left: 120, right: 160, top: 40, bottom: 40 }}
+                    node={(props: any) => {
+                      const { x, y, width, height, index, payload } = props;
+                      const colors = ["#3b82f6", "#6366f1", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
+                      
+                      // Explicit depth check from Recharts Sankey payload
+                      const depth = payload.depth;
+                      const isFirst = depth === 0;
+                      const isLast = depth === 2 || (payload.linksIn?.length > 0 && payload.linksOut?.length === 0);
+                      
+                      return (
+                        <g>
+                          <rect
+                            x={x}
+                            y={y}
+                            width={width}
+                            height={height}
+                            fill={colors[index % colors.length]}
+                            fillOpacity={0.9}
+                            rx={6}
+                            stroke="rgba(255,255,255,0.4)"
+                            strokeWidth={1.5}
+                          />
+                          <text
+                            x={isFirst ? x - 16 : x + width + 16}
+                            y={y + height / 2}
+                            textAnchor={isFirst ? "end" : "start"}
+                            dy=".35em"
+                            fontSize={11}
+                            fontWeight={900}
+                            fill="#cbd5e1"
+                            className="uppercase tracking-[0.12em]"
+                            style={{ 
+                              pointerEvents: 'none',
+                              filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))'
+                            }}
+                          >
+                            {payload.name}
+                          </text>
+                        </g>
+                      );
+                    }}
+                    link={{ stroke: "rgba(139, 92, 246, 0.4)" }}
+                  >
+                    <Tooltip 
+                       content={({ active, payload }) => {
+                         if (active && payload && payload.length) {
+                           const data = payload[0].payload;
+                           if (data.source && data.target) {
+                             return (
+                               <div className="bg-[#020617] border border-white/10 p-3 rounded-xl shadow-2xl backdrop-blur-md">
+                                 <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Energy Flow</div>
+                                 <div className="flex items-center gap-2 text-xs font-bold text-white uppercase">
+                                   <span className="text-blue-400">{data.source.name}</span>
+                                   <ArrowRight className="w-3 h-3 text-slate-600" />
+                                   <span className="text-emerald-400">{data.target.name}</span>
+                                 </div>
+                                 <div className="mt-2 text-lg font-black text-white font-mono tracking-tighter">
+                                   {data.value.toLocaleString()} <span className="text-[10px] text-slate-500 uppercase">Joules</span>
+                                 </div>
+                               </div>
+                             );
+                           }
+                           return (
+                             <div className="bg-[#020617] border border-white/10 p-3 rounded-xl shadow-2xl backdrop-blur-md">
+                               <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{data.name}</div>
+                               <div className="text-lg font-black text-white font-mono tracking-tighter">{data.value.toLocaleString()} J</div>
+                             </div>
+                           );
+                         }
+                         return null;
+                       }}
+                    />
+                  </Sankey>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="h-[400px] flex flex-col items-center justify-center gap-4">
+                <Activity className="w-8 h-8 text-slate-800 animate-pulse" />
+                <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest">Computing flow trajectory...</p>
+              </div>
+            )}
+          </div>
         </GlassCard>
       </div>
     </div>

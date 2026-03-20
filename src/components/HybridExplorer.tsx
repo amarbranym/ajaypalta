@@ -12,10 +12,49 @@ import {
   ResponsiveContainer,
   ReferenceLine,
   Sankey,
+  AreaChart,
+  Area,
 } from "recharts";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Plus,
+  RotateCcw,
+  Download,
+  FileText,
+  ChevronDown,
+  ChevronRight,
+  Calculator,
+  Zap,
+  Activity,
+  Trophy,
+  ArrowRight
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SectionWrapper } from "./ui/SectionWrapper";
 import { GlowButton } from "./ui/GlowButton";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type UiRole = "input" | "readonly" | "derived" | "hidden" | "hidden_value" | string;
 type DType = "number" | "percent" | "text" | string;
@@ -408,11 +447,11 @@ export default function HybridExplorer() {
   const [keyMetricsOnly, setKeyMetricsOnly] = useState(false);
   const [selectedGraphMetric, setSelectedGraphMetric] = useState("T2_C");
   const [selectedSankeyModelId, setSelectedSankeyModelId] = useState<string>("");
-  
+
 
   const [panelOpen, setPanelOpen] = useState<Record<string, boolean>>({
     "Performance Graph": true,
-   
+
     "Editable Inputs": true,
     "Reference Inputs": false,
     Compression: true,
@@ -426,6 +465,13 @@ export default function HybridExplorer() {
     "IHRL Cooling Recovery Flow": true,
     "Sankey Energy Flow": true,
   });
+
+  const togglePanel = (key: string) => {
+    setPanelOpen((prev) => ({
+      ...prev,
+      [key]: !(prev[key] ?? true),
+    }));
+  };
 
   useEffect(() => {
     let alive = true;
@@ -550,7 +596,7 @@ export default function HybridExplorer() {
     }
   }, [models, selectedSankeyModelId]);
 
-  
+
 
   const panels = useMemo(() => {
     if (!schema) return [];
@@ -845,326 +891,324 @@ export default function HybridExplorer() {
 
 
 
-  function togglePanel(panelKey: string) {
-    setPanelOpen((prev) => ({
-      ...prev,
-      [panelKey]: !(prev[panelKey] ?? true),
-    }));
-  }
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-[#0f0f12] border border-white/10 p-3 rounded-lg shadow-xl shadow-black/50 backdrop-blur-md">
+          <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2">{label}</p>
+          {payload.map((entry: any, index: number) => (
+            <div key={index} className="flex items-center gap-3">
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+              <p className="text-xs font-bold text-white uppercase tracking-tighter">
+                {entry.name}: <span className="text-blue-400 font-mono ml-1">{entry.value}</span>
+              </p>
+            </div>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
 
   if (loadingSchema && !schema) {
     return (
       <div className="flex flex-col items-center justify-center p-20 min-h-[400px]">
-        <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mb-4" />
-        <h3 className="text-sm font-black uppercase tracking-widest text-slate-500">Initializing Engine...</h3>
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+          className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full mb-6"
+        />
+        <h3 className="text-sm font-black uppercase tracking-widest text-slate-500 animate-pulse">Initializing Engine Diagnostics...</h3>
       </div>
     );
   }
 
   return (
     <div className="flex flex-col gap-8">
-      {/* Tool Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-4">
-        <div className="space-y-1">
-          <h2 className="text-2xl font-black text-white tracking-tight uppercase">
-            Engineering <span className="text-blue-500">Suite</span>
-          </h2>
-          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-            Thermodynamic Reference Model v1.2
-          </p>
-        </div>
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-end gap-6">
 
         <div className="flex flex-wrap items-center gap-3">
-          <GlowButton
-            onClick={() => setKeyMetricsOnly((v) => !v)}
-            variant={keyMetricsOnly ? "primary" : "outline"}
-            className="text-[10px] uppercase font-black tracking-widest px-4 py-2"
-          >
-            {keyMetricsOnly ? "All Metrics" : "Key Metrics"}
-          </GlowButton>
-
-          <GlowButton
-            onClick={addModel}
-            disabled={!schema || models.length >= MAX_MODELS}
-            variant="outline"
-            className="text-[10px] uppercase font-black tracking-widest px-4 py-2 bg-white/5 border-white/10"
-          >
-            + Add Model
-          </GlowButton>
-
-          <GlowButton
-            onClick={resetAllModels}
-            disabled={!schema}
-            variant="outline"
-            className="text-[10px] uppercase font-black tracking-widest px-4 py-2 bg-white/5 border-white/10"
-          >
-            Reset
-          </GlowButton>
-
-          <GlowButton
-            onClick={exportDisplayCsv}
-            variant="outline"
-            className="text-[10px] uppercase font-black tracking-widest px-4 py-2 bg-white/5 border-white/10"
-          >
-            Export CSV
-          </GlowButton>
-          
-          <GlowButton
-            onClick={downloadExplorerPdf}
-            className="text-[10px] uppercase font-black tracking-widest px-4 py-2 bg-blue-600/10 border-blue-500/20 text-blue-400 shadow-blue-500/10 shadow-lg"
-          >
-            PDF Report
-          </GlowButton>
-
-          <div className="text-[10px] font-black font-mono text-slate-500 flex items-center gap-2 ml-2">
+          <div className="flex items-center gap-2 mr-2 px-3 py-2 rounded-xl bg-white/[0.03] border border-white/5">
             <div className={cn("w-2 h-2 rounded-full", loadingCompute ? "bg-amber-500 animate-pulse" : "bg-emerald-500")} />
-            {loadingCompute ? "COMPUTING" : "READY"}
+            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest whitespace-nowrap">
+              {loadingCompute ? "Computing Trajectories" : "Diagnostic Ready"}
+            </span>
           </div>
+
+          <GlowButton onClick={addModel} disabled={models.length >= MAX_MODELS} variant="outline" className="px-5 py-2.5 h-auto text-[10px] uppercase font-black tracking-widest gap-2">
+            <Plus className="w-3 h-3" /> Add Model
+          </GlowButton>
+
+          <GlowButton onClick={resetAllModels} variant="outline" className="px-5 py-2.5 h-auto text-[10px] uppercase font-black tracking-widest gap-2 opacity-50 hover:opacity-100">
+            <RotateCcw className="w-3 h-3" /> Reset
+          </GlowButton>
+
+          <GlowButton onClick={downloadExplorerPdf} className="px-6 py-2.5 h-auto text-[10px] uppercase font-black tracking-widest gap-2 bg-blue-600 shadow-blue-600/20 shadow-lg">
+            <FileText className="w-3 h-3" /> Generate Report
+          </GlowButton>
         </div>
       </div>
 
       {err && (
-        <div className="p-4 rounded-xl border border-red-500/20 bg-red-500/5 text-red-400 text-xs font-bold uppercase tracking-wider">
-          <span className="opacity-60 mr-2">Engine Error:</span> {err}
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-4 rounded-xl border border-red-500/20 bg-red-500/5 text-red-400 text-xs font-bold uppercase tracking-wider flex items-center gap-3"
+        >
+          <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+          <span className="opacity-60">Engine Exception:</span> {err}
+        </motion.div>
       )}
 
-      {models.length > 0 && (
-        <div className="glass rounded-2xl overflow-hidden border border-white/10 bg-white/[0.02] shadow-2xl">
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: `300px repeat(${models.length}, minmax(180px, 1fr))`,
-              alignItems: "stretch",
-            }}
-          >
-            <div className="px-8 py-6 bg-white/5 border-b border-white/5 font-black text-slate-400 uppercase tracking-[0.2em] text-[10px] flex items-center">
-              Active Configurations
-            </div>
+      {/* Main Analysis Area */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
 
-            {models.map((model) => (
-              <div
-                key={model.id}
-                className="px-8 py-6 border-b border-l border-white/5 bg-white/[0.04] text-center font-black text-white text-[11px] uppercase tracking-[0.15em] flex items-center justify-center gap-2"
-              >
-                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                {model.name}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {!schema ? (
-        <div className="p-20 text-center text-slate-600 font-black uppercase tracking-widest text-[10px]">
-          No engine schema loaded.
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {panels.map((panel) => {
-            const isOpen = panelOpen[panel.panel_key] ?? true;
-
-            return (
-              <div
-                key={panel.panel_key}
-                className="glass rounded-2xl overflow-hidden border border-white/5 bg-white/[0.01]"
-              >
+        {/* Left Column: Panel List and Inputs */}
+        <div className="xl:col-span-4 space-y-6">
+          <Card className="bg-slate-900/40 border-white/5 backdrop-blur-sm overflow-hidden border-none shadow-2xl">
+            <CardHeader className="bg-white/5 border-b border-white/5 py-4">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">Configuration Panels</CardTitle>
                 <button
-                  type="button"
-                  onClick={() => togglePanel(panel.panel_key)}
-                  className="w-full flex justify-between items-center px-6 py-4 transition-colors hover:bg-white/5 border-none"
-                  style={{ background: getPanelHeaderColor(panel.panel_key) }}
+                  onClick={() => setKeyMetricsOnly(!keyMetricsOnly)}
+                  className="text-[10px] font-black text-blue-400 uppercase tracking-[0.1em] hover:text-blue-300 transition-colors"
                 >
-                  <span className="text-xs font-black text-white uppercase tracking-widest">
-                    {isOpen ? "▼ " : "▶ "} {panel.panel_key}
-                  </span>
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter opacity-50">Panel v1.0</span>
+                  {keyMetricsOnly ? "Show All Specs" : "Key Specs Only"}
                 </button>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="divide-y divide-white/5">
+                {panels.map((panel) => {
+                  const isOpen = panelOpen[panel.panel_key] ?? true;
+                  return (
+                    <div key={panel.panel_key} className="flex flex-col">
+                      <button
+                        onClick={() => togglePanel(panel.panel_key)}
+                        className="flex items-center justify-between w-full px-6 py-4 hover:bg-white/[0.02] transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="p-1 rounded bg-blue-500/10">
+                            {isOpen ? <ChevronDown className="w-3 h-3 text-blue-400" /> : <ChevronRight className="w-3 h-3 text-slate-500" />}
+                          </div>
+                          <span className={cn("text-[11px] font-black uppercase tracking-widest", isOpen ? "text-white" : "text-slate-500")}>
+                            {panel.panel_key}
+                          </span>
+                        </div>
+                        <span className="text-[9px] font-mono text-slate-600">{panel.items.length} Metrics</span>
+                      </button>
 
-                {isOpen && (
-                  <div className="overflow-x-auto scrollbar-hide">
-                    <table className="w-full border-collapse min-w-[900px]">
-                      <tbody>
-                        {panel.items.map((it, rowIndex) => {
-                          const role = (it.ui_role ?? "").toLowerCase();
-                          if (role === "hidden") return null;
-
-                          return (
-                            <tr
-                              key={`${panel.panel_key}-${it.metric_key}`}
-                              className={cn(
-                                "transition-all group border-b border-white/5",
-                                rowIndex % 2 === 0 ? "bg-white/[0.01]" : "bg-transparent",
-                                "hover:bg-blue-500/[0.03]"
-                              )}
-                            >
-                              <td className="px-8 py-5 min-w-[300px]">
-                                <div className="text-[12px] font-black text-slate-200 uppercase tracking-wider group-hover:text-blue-400 transition-colors">
-                                  {it.label}
-                                </div>
-                                {panel.panel_key === "Editable Inputs" && getRangeText(it) && (
-                                  <div className="text-[9px] font-bold text-slate-600 uppercase mt-1.5 tracking-widest opacity-80">
-                                    {getRangeText(it)}
-                                  </div>
-                                )}
-                              </td>
-
-                              {models.map((model) => {
-                                const display = getDisplayValue(model, it);
-                                const masked = role === "hidden_value";
-
+                      <AnimatePresence>
+                        {isOpen && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="overflow-hidden bg-white/[0.01]"
+                          >
+                            <div className="p-6 space-y-6">
+                              {panel.items.map((it) => {
+                                if (!isEditable(it)) return null;
                                 return (
-                                  <td
-                                    key={`${model.id}-${it.metric_key}`}
-                                    className="px-8 py-5 border-l border-white/5 text-right w-[180px]"
-                                  >
-                                    {isEditable(it) ? (
-                                      <input
-                                        value={model.inputs[it.metric_key] ?? ""}
-                                        onChange={(e) => onChange(model.id, it, e.target.value)}
-                                        onBlur={() => onBlurValue(model.id, it)}
-                                        onKeyDown={(e) => {
-                                          if (e.key === "Enter") {
-                                            e.preventDefault();
-                                            onBlurValue(model.id, it);
-                                            (e.target as HTMLInputElement).blur();
-                                          }
-                                        }}
-                                        className="w-full px-4 py-2.5 rounded-xl bg-white/[0.05] border border-white/10 text-white text-right focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[11px] font-bold tracking-tight shadow-inner"
-                                        inputMode={
-                                          normalizeDType(it.dtype) === "number" ||
-                                          normalizeDType(it.dtype) === "percent"
-                                            ? "decimal"
-                                            : "text"
-                                        }
-                                      />
-                                    ) : (
-                                      <div className="inline-block min-w-[120px] px-4 py-2.5 rounded-xl bg-blue-500/[0.03] border border-blue-500/10 text-right font-mono text-[12px] font-black text-blue-400 group-hover:bg-blue-500/[0.06] transition-all tracking-tighter shadow-sm">
-                                        {masked ? "••••" : display}
-                                      </div>
-                                    )}
-                                  </td>
+                                  <div key={it.metric_key} className="space-y-3">
+                                    <div className="flex items-center justify-between">
+                                      <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                        {it.label}
+                                      </Label>
+                                      {getRangeText(it) && (
+                                        <span className="text-[9px] font-mono text-slate-600">{getRangeText(it)}</span>
+                                      )}
+                                    </div>
+                                    <div className="grid grid-cols-1 gap-2">
+                                      {models.map((model) => (
+                                        <div key={model.id} className="relative group">
+                                          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[9px] font-black font-mono text-slate-600 group-focus-within:text-blue-500/50 transition-colors uppercase">
+                                            {model.name}
+                                          </div>
+                                          <Input
+                                            value={model.inputs[it.metric_key] ?? ""}
+                                            onChange={(e) => onChange(model.id, it, e.target.value)}
+                                            onBlur={() => onBlurValue(model.id, it)}
+                                            className="bg-white/5 border-white/10 pl-20 text-right font-mono text-xs font-bold text-white focus-visible:ring-blue-500/20 focus-visible:border-blue-500/50 transition-all h-9"
+                                            placeholder="--"
+                                          />
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
                                 );
                               })}
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
+            </CardContent>
+          </Card>
+        </div>
 
-          {/* Graphical Analysis Section */}
-          <div className="grid grid-cols-1 gap-6">
-            <div className="glass rounded-2xl overflow-hidden border border-white/5 bg-white/[0.01]">
-              <button
-                type="button"
-                onClick={() => togglePanel("Performance Graph")}
-                className="w-full flex justify-between items-center px-6 py-4 bg-blue-600/10 hover:bg-blue-600/20 transition-colors border-none"
-              >
-                <span className="text-xs font-black text-white uppercase tracking-widest">
-                  {(panelOpen["Performance Graph"] ?? true) ? "▼ " : "▶ "} Graphical Performance Analysis
-                </span>
-                <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Multi-Model Trend</span>
-              </button>
+        {/* Right Column: Key Metrics and Visuals */}
+        <div className="xl:col-span-8 space-y-8">
 
-              {(panelOpen["Performance Graph"] ?? true) && (
-                <div ref={graphRef} className="p-8 space-y-8">
-                  <div className="flex flex-wrap items-center gap-4 p-4 rounded-xl bg-white/[0.02] border border-white/5">
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Select Dimension:</label>
-                    <select
-                      value={selectedGraphMetric}
-                      onChange={(e) => setSelectedGraphMetric(e.target.value)}
-                      className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-[11px] font-black uppercase outline-none focus:border-blue-500/50 transition-all cursor-pointer"
-                    >
-                      {GRAPH_METRIC_OPTIONS.map((opt) => (
-                        <option key={opt.key} value={opt.key}>{opt.label}</option>
-                      ))}
-                    </select>
+          {/* Active Model Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {models.map((model, idx) => {
+              const efficiency = Number(model.values.eta_brake_pct);
+              return (
+                <Card key={model.id} className="bg-white/[0.02] border border-white/5 hover:border-blue-500/30 transition-all group relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 blur-[50px] -translate-y-1/2 translate-x-1/2" />
+                  <CardHeader className="py-4 px-6 border-b border-white/5 flex flex-row items-center justify-between relative z-10">
+                    <div className="flex items-center gap-3">
+                      <div className="w-6 h-6 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400 text-[10px] font-black">
+                        {String.fromCharCode(65 + idx)}
+                      </div>
+                      <CardTitle className="text-[11px] font-black uppercase tracking-[0.1em] text-white">
+                        {model.name}
+                      </CardTitle>
+                    </div>
+                    <Trophy className={cn("w-3 h-3", efficiency > 0.6 ? "text-amber-500" : "text-slate-700")} />
+                  </CardHeader>
+                  <CardContent className="p-6 relative z-10">
+                    <div className="grid grid-cols-2 gap-6">
+                      <div className="space-y-1">
+                        <Label className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Efficiency</Label>
+                        <div className="text-xl font-black text-blue-400 font-mono tracking-tighter">
+                          {formatGraphValue("eta_brake_pct", efficiency)}
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Peak Pres.</Label>
+                        <div className="text-xl font-black text-white font-mono tracking-tighter">
+                          {Math.round(Number(model.values.P3_real_bar))} <span className="text-[10px] text-slate-500">bar</span>
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Peak Temp.</Label>
+                        <div className="text-xl font-black text-white font-mono tracking-tighter">
+                          {Math.round(Number(model.values.T3_real_C))} <span className="text-[10px] text-slate-500">°C</span>
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[9px] font-black text-slate-500 uppercase tracking-widest">BSFC</Label>
+                        <div className="text-xl font-black text-emerald-400 font-mono tracking-tighter">
+                          {Math.round(Number(model.values.bsfc_g_kWh))} <span className="text-[10px] text-slate-500">g/kWh</span>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          <Tabs defaultValue="trends" className="w-full">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6 px-1">
+              <TabsList className="bg-white/5 border border-white/5 p-1 h-auto rounded-xl">
+                <TabsTrigger value="trends" className="px-6 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-blue-600 data-[state=active]:text-white">Trend Analysis</TabsTrigger>
+                <TabsTrigger value="energy" className="px-6 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-blue-600 data-[state=active]:text-white">Energy Flow</TabsTrigger>
+                <TabsTrigger value="detailed" className="px-6 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-blue-600 data-[state=active]:text-white">Detailed Specs</TabsTrigger>
+              </TabsList>
+
+              {/* Only show dimension selector for trends */}
+              <div className="flex items-center gap-3 shrink-0">
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest whitespace-nowrap">Dimension:</span>
+                <Select value={selectedGraphMetric} onValueChange={(val: string | null) => { if (val) setSelectedGraphMetric(val); }}>
+                  <SelectTrigger className="w-[180px] h-9 bg-white/5 border-white/10 text-[10px] uppercase font-black tracking-widest text-white rounded-lg transition-colors hover:bg-white/[0.08]">
+                    <SelectValue placeholder="Metric" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-950 border-white/10 text-white min-w-[280px]">
+                    {GRAPH_METRIC_OPTIONS.map(opt => (
+                      <SelectItem key={opt.key} value={opt.key} className="text-[10px] font-black uppercase tracking-widest py-2.5 focus:bg-blue-600 focus:text-white transition-colors">
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <TabsContent value="trends" className="mt-0">
+              <Card className="bg-white/[0.01] border-white/5 overflow-hidden">
+                <CardHeader className="py-6 px-8 border-b border-white/5">
+                  <div className="flex items-center gap-3">
+                    <Activity className="w-4 h-4 text-blue-400" />
+                    <CardTitle className="text-xs font-black uppercase tracking-widest text-white">Comparative Performance Mapping</CardTitle>
                   </div>
-
-                  <div className="h-[340px] w-full">
+                </CardHeader>
+                <CardContent className="p-8 pb-4">
+                  <div className="h-[400px] w-full min-h-[400px] relative" ref={graphRef}>
                     {graphData.length > 0 ? (
                       <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={graphData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                        <AreaChart data={graphData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                          <defs>
+                            <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4} />
+                              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                          <XAxis 
-                            dataKey="CR" 
-                            stroke="rgba(255,255,255,0.2)" 
-                            fontSize={10} 
+                          <XAxis
+                            dataKey="CR"
+                            stroke="rgba(255,255,255,0.2)"
+                            fontSize={10}
+                            tick={{ fill: "rgba(255,255,255,0.4)" }}
+                            axisLine={false}
+                            tickLine={false}
+                            label={{ value: 'Compression Ratio (CR)', position: 'insideBottom', offset: -10, fontSize: 10, fill: 'rgba(255,255,255,0.2)', fontWeight: 900 }}
+                          />
+                          <YAxis
+                            stroke="rgba(255,255,255,0.2)"
+                            fontSize={10}
                             tick={{ fill: "rgba(255,255,255,0.4)" }}
                             axisLine={false}
                             tickLine={false}
                           />
-                          <YAxis 
-                            stroke="rgba(255,255,255,0.2)" 
-                            fontSize={10} 
-                            tick={{ fill: "rgba(255,255,255,0.4)" }}
-                            axisLine={false}
-                            tickLine={false}
-                          />
-                          <Tooltip
-                            contentStyle={{ 
-                              backgroundColor: "#0f0f12", 
-                              borderColor: "rgba(255,255,255,0.1)",
-                              borderRadius: "12px",
-                              fontSize: "10px",
-                              fontWeight: "900",
-                              color: "#fff"
-                            }}
-                            itemStyle={{ color: "#3b82f6" }}
-                            formatter={(value: any) => [formatGraphValue(selectedGraphMetric, Number(value)), "Value"]}
-                          />
-                          <Line
+                          <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#3b82f6', strokeWidth: 1, strokeDasharray: '4 4' }} />
+                          <Area
                             type="monotone"
                             dataKey="value"
+                            name={GRAPH_METRIC_OPTIONS.find(o => o.key === selectedGraphMetric)?.label}
                             stroke="#3b82f6"
                             strokeWidth={3}
-                            dot={{ r: 4, fill: "#3b82f6", strokeWidth: 0 }}
-                            activeDot={{ r: 6, fill: "#fff", stroke: "#3b82f6", strokeWidth: 2 }}
+                            fillOpacity={1}
+                            fill="url(#colorValue)"
+                            animationDuration={1000}
                           />
-                        </LineChart>
+                        </AreaChart>
                       </ResponsiveContainer>
                     ) : (
                       <div className="h-full flex items-center justify-center text-[10px] font-black text-slate-700 uppercase tracking-widest">
-                        Insufficient data for trajectory analysis
+                        Insufficient trajectory data
                       </div>
                     )}
                   </div>
-                </div>
-              )}
-            </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* IHRL Flow */}
-              <div className="glass rounded-2xl overflow-hidden border border-white/5 bg-white/[0.01]">
-                <button
-                  type="button"
-                  onClick={() => togglePanel("IHRL Cooling Recovery Flow")}
-                  className="w-full flex justify-between items-center px-6 py-4 bg-emerald-600/10 hover:bg-emerald-600/20 transition-colors border-none"
-                >
-                  <span className="text-xs font-black text-white uppercase tracking-widest">
-                    {(panelOpen["IHRL Cooling Recovery Flow"] ?? true) ? "▼ " : "▶ "} Energy Recovery Flow
-                  </span>
-                  <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">IHRL Optimization</span>
-                </button>
-
-                {(panelOpen["IHRL Cooling Recovery Flow"] ?? true) && (
-                  <div ref={ihrlRef} className="p-6 space-y-6">
-                    <select
-                      value={selectedSankeyModelId}
-                      onChange={(e) => setSelectedSankeyModelId(e.target.value)}
-                      className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-[11px] font-black uppercase outline-none focus:border-blue-500/50"
-                    >
-                      {models.map((model) => (
-                        <option key={model.id} value={model.id}>{model.name}</option>
-                      ))}
-                    </select>
-
-                    <div className="h-[250px] w-full">
+            <TabsContent value="energy" className="mt-0">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card className="bg-white/[0.01] border-white/5 overflow-hidden">
+                  <CardHeader className="py-6 px-8 border-b border-white/5 flex flex-row items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Zap className="w-4 h-4 text-emerald-400" />
+                      <CardTitle className="text-xs font-black uppercase tracking-widest text-white">Recovery Chain</CardTitle>
+                    </div>
+                    <Select value={selectedSankeyModelId} onValueChange={(val: string | null) => { if (val) setSelectedSankeyModelId(val); }}>
+                      <SelectTrigger className="w-[120px] h-8 bg-white/5 border-white/10 text-[9px] uppercase font-black tracking-widest">
+                        <SelectValue placeholder="Model" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-900 border-white/10 text-white">
+                        {models.map(m => <SelectItem key={m.id} value={m.id} className="text-[9px] uppercase font-black">{m.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </CardHeader>
+                  <CardContent className="p-8" ref={ihrlRef}>
+                    <div className="h-[280px] w-full">
                       {ihrlSankeyData && ihrlSankeyData.summary.coolGross > 0 ? (
                         <ResponsiveContainer width="100%" height="100%">
                           <Sankey
@@ -1173,35 +1217,28 @@ export default function HybridExplorer() {
                             nodeWidth={10}
                             linkCurvature={0.4}
                             node={{ stroke: "rgba(255,255,255,0.1)", strokeWidth: 1 }}
-                            link={{ stroke: "rgba(16, 185, 129, 0.1)", strokeWidth: 1 }}
+                            link={{ stroke: "rgba(16, 185, 129, 0.2)", strokeWidth: 1 }}
                           />
                         </ResponsiveContainer>
                       ) : (
-                        <div className="h-full flex items-center justify-center text-[10px] font-black text-slate-700 uppercase tracking-widest text-center">
-                          Optimizing Energy flows...
+                        <div className="h-full flex flex-col items-center justify-center gap-4">
+                          <Activity className="w-8 h-8 text-slate-800 animate-pulse" />
+                          <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest">Optimizing Recovery flows...</p>
                         </div>
                       )}
                     </div>
-                  </div>
-                )}
-              </div>
+                  </CardContent>
+                </Card>
 
-              {/* Net Energy Partition */}
-              <div className="glass rounded-2xl overflow-hidden border border-white/5 bg-white/[0.01]">
-                <button
-                  type="button"
-                  onClick={() => togglePanel("Sankey Energy Flow")}
-                  className="w-full flex justify-between items-center px-6 py-4 bg-violet-600/10 hover:bg-violet-600/20 transition-colors border-none"
-                >
-                  <span className="text-xs font-black text-white uppercase tracking-widest">
-                    {(panelOpen["Sankey Energy Flow"] ?? true) ? "▼ " : "▶ "} Net Energy Partition
-                  </span>
-                  <span className="text-[10px] font-bold text-violet-400 uppercase tracking-widest">Sankey Distribution</span>
-                </button>
-
-                {(panelOpen["Sankey Energy Flow"] ?? true) && (
-                  <div ref={netEnergyRef} className="p-6 space-y-6">
-                    <div className="h-[250px] w-full">
+                <Card className="bg-white/[0.01] border-white/5 overflow-hidden">
+                  <CardHeader className="py-6 px-8 border-b border-white/5 overflow-hidden">
+                    <div className="flex items-center gap-3">
+                      <Zap className="w-4 h-4 text-violet-400" />
+                      <CardTitle className="text-xs font-black uppercase tracking-widest text-white">Energy Partition</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-8" ref={netEnergyRef}>
+                    <div className="h-[280px] w-full">
                       {sankeyData && sankeyData.summary.qIn > 0 ? (
                         <ResponsiveContainer width="100%" height="100%">
                           <Sankey
@@ -1210,22 +1247,78 @@ export default function HybridExplorer() {
                             nodeWidth={10}
                             linkCurvature={0.4}
                             node={{ stroke: "rgba(255,255,255,0.1)", strokeWidth: 1 }}
-                            link={{ stroke: "rgba(139, 92, 246, 0.1)", strokeWidth: 1 }}
+                            link={{ stroke: "rgba(139, 92, 246, 0.2)", strokeWidth: 1 }}
                           />
                         </ResponsiveContainer>
                       ) : (
-                        <div className="h-full flex items-center justify-center text-[10px] font-black text-slate-700 uppercase tracking-widest text-center">
-                          Awaiting trajectory data
+                        <div className="h-full flex flex-col items-center justify-center gap-4">
+                          <Activity className="w-8 h-8 text-slate-800 animate-pulse" />
+                          <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest">Awaiting Partition Data...</p>
                         </div>
                       )}
                     </div>
-                  </div>
-                )}
+                  </CardContent>
+                </Card>
               </div>
-            </div>
-          </div>
+            </TabsContent>
+
+            <TabsContent value="detailed" className="mt-0">
+              <Card className="bg-white/[0.01] border-white/5 overflow-hidden">
+                <CardHeader className="py-6 px-8 border-b border-white/5">
+                  <div className="flex items-center gap-3">
+                    <Calculator className="w-4 h-4 text-slate-400" />
+                    <CardTitle className="text-xs font-black uppercase tracking-widest text-white">Full Thermodynamic Specification</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-0 overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="bg-white/[0.03] border-b border-white/5">
+                        <th className="px-8 py-5 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Metric Definition</th>
+                        {models.map(m => (
+                          <th key={m.id} className="px-8 py-5 text-right text-[10px] font-black text-blue-400 uppercase tracking-widest border-l border-white/5">
+                            {m.name}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {panels.map(p => (
+                        <React.Fragment key={p.panel_key}>
+                          <tr className="bg-white/[0.01]">
+                            <td colSpan={models.length + 1} className="px-8 py-2 text-[9px] font-black text-slate-600 uppercase tracking-[0.3em] border-b border-white/5">
+                              {p.panel_key}
+                            </td>
+                          </tr>
+                          {p.items.map((it, i) => {
+                            if (it.ui_role === "input" && p.panel_key === "Editable Inputs") return null;
+                            if (it.ui_role === "hidden") return null;
+                            return (
+                              <tr key={it.metric_key} className={cn("border-b border-white/5 hover:bg-white/[0.02] transition-colors", i % 2 === 0 ? "bg-transparent" : "bg-white/[0.005]")}>
+                                <td className="px-8 py-4">
+                                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{it.label}</div>
+                                </td>
+                                {models.map(m => (
+                                  <td key={m.id} className="px-8 py-4 text-right border-l border-white/5">
+                                    <div className="text-[12px] font-black text-white font-mono tracking-tighter">
+                                      {getDisplayValue(m, it)}
+                                    </div>
+                                  </td>
+                                ))}
+                              </tr>
+                            );
+                          })}
+                        </React.Fragment>
+                      ))}
+                    </tbody>
+                  </table>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+
         </div>
-      )}
+      </div>
     </div>
   );
 }

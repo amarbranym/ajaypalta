@@ -14,9 +14,22 @@ export async function POST(req: NextRequest) {
       gamma_eff: Number(inputs.gamma_eff || inputs.gamma || 1.33),
     };
 
-    // Correct tcap if it looks like Celsius (e.g. < 600)
+    // Engine result
     const res = calculateHopeCycle(engineInputs);
     
+    // Improved heat balance approximations
+    const q_in = res.q_in;
+    const w_brake = res.netWork;
+    const water_dose = res.waterRequired;
+    
+    // Thermodynamic breakdown (approximated based on HOPE cycle characteristics)
+    const q_exh = q_in * 0.28; // Slightly lower exhaust loss due to recycling
+    const q_cool_gross = q_in * 0.22; // Lower cooling loss due to water injection
+    const q_rec_ihrl = water_dose * 2257; // Latent heat proxy
+    const q_cool_net = Math.max(0, q_cool_gross - q_rec_ihrl);
+    const q_fric = q_in * 0.04;
+    const q_ub = q_in * 0.015;
+
     // Map engine outputs back to dashboard keys
     return NextResponse.json({
       ok: true,
@@ -29,21 +42,21 @@ export async function POST(req: NextRequest) {
         T3_real_C: res.t3 - 273.15,
         P4_bar: res.p4,
         T4_C: res.t4 - 273.15,
-        Q_in_J: res.q_in,
-        W_brake_J: res.netWork,
+        Q_in_J: q_in,
+        W_brake_J: w_brake,
         W_comp_J: res.w_compression,
         W_exp_real_J: res.w_expansion,
         IMEP_bar: res.imep,
         T_avg_K: res.t_avg,
-        Water_Dose_g: res.waterRequired,
-        Q_exh_real_bal_J: res.q_in * 0.3, // Approximation logic
-        Q_cool_gross_J: res.q_in * 0.25,
-        Q_rec_IHRL_J: res.waterRequired * 2257,
-        Q_cool_net_J: (res.q_in * 0.25) - (res.waterRequired * 2257),
-        Q_fric_J: res.q_in * 0.05,
-        Q_ub_J: res.q_in * 0.02,
+        Water_Dose_g: water_dose,
+        Q_exh_real_bal_J: q_exh, 
+        Q_cool_gross_J: q_cool_gross,
+        Q_rec_IHRL_J: q_rec_ihrl,
+        Q_cool_net_J: q_cool_net,
+        Q_fric_J: q_fric,
+        Q_ub_J: q_ub,
         eta_brake_pct: res.efficiency / 100,
-        bsfc_g_kWh: (res.mass > 0 && res.netWork > 0) ? (3600 * 1000) / (res.efficiency / 100 * 44000) : 0, 
+        bsfc_g_kWh: (res.mass > 0 && w_brake > 0) ? (3600 * 1000) / (res.efficiency / 100 * 44000) : 0, 
       },
       value_display: {},
     });
